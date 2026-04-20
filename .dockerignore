@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+
+# Virtual Environment
+venv/
+env/
+.env/
+.venv/
+
+# SQLite database files (use Docker volume instead)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+app.log
+logs/
+
+# Environment files (sensitive)
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Distribution / Build
+dist/
+build/
+*.egg-info/
+
+# Streamlit cache
+.streamlit/

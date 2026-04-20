@@ -6,8 +6,3 @@ basicConfig(filename = 'app.log',level=DEBUG,filemode='w',
             style="{")
 
 logger = getLogger()
-# debug("This is a debug message")
-# info("All the inputs are correct")
-# warning("The warning message is displaying")
-# error("The error message is displaying")
-# critical("The critical message is displaying")

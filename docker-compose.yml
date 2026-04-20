@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+
+  # ── FastAPI Service ───────────────────────────────────────────────────────
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taxcalc_fastapi
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app                    # Live code reload during development
+      - sqlite_data:/app/data         # Persist SQLite database
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  # ── Streamlit Service ─────────────────────────────────────────────────────
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taxcalc_streamlit
+    command: streamlit run tax_streamlit_app.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app:/app                       # Live code reload during development
+      - sqlite_data:/app/data         # Same SQLite volume — shared with FastAPI
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - fastapi                       # Start FastAPI first
+    restart: unless-stopped
+
+# ── Shared Volume for SQLite DB ───────────────────────────────────────────────
+volumes:
+  sqlite_data:
