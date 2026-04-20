@@ -1,10 +1,3 @@
-# tax_db = {}
-
-
-
-
-
-
 import sqlite3
 from schemas.tax_model import TaxRequest
 from services.TaxCalculator import TaxCalculator
