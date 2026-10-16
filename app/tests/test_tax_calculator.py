@@ -164,3 +164,65 @@ class TestCalculateTax:
         new = TaxCalculator(3000000, 0, 0, "New")
         assert isinstance(old.calculate_tax(), float)
         assert isinstance(new.calculate_tax(), float)
+
+
+# ─────────────────────────────────────────────
+# FAILURE & EDGE CASE TESTS
+# ─────────────────────────────────────────────
+
+class TestFailureCases:
+
+
+    # --------------------------------------------
+    # Negative Salary Inputs
+    # --------------------------------------------
+    def test_negative_basic_salary(self):
+        calc = TaxCalculator(-500000, 0, 0, "New")
+        gross = calc.calculate_gross_income()
+        assert gross < 0
+
+    def test_negative_hra(self):
+        calc = TaxCalculator(500000, -100000, 0, "New")
+        gross = calc.calculate_gross_income()
+        assert gross == 400000
+
+    def test_negative_other_income(self):
+        calc = TaxCalculator(500000, 0, -200000, "Old")
+        gross = calc.calculate_gross_income()
+        assert gross == 300000
+
+
+    def test_zero_income_tax(self, zero_income_calc):
+        tax = zero_income_calc.calculate_tax()
+        assert tax == 0
+
+    # --------------------------------------------
+    # Tax Should Never Be Negative
+    # --------------------------------------------
+    def test_tax_not_negative_new(self):
+        calc = TaxCalculator(0, 0, 0, "New")
+        assert calc.calculate_new_regime_tax() >= 0
+
+    def test_tax_not_negative_old(self):
+        calc = TaxCalculator(0, 0, 0, "Old")
+        assert calc.calculate_old_regime_tax() >= 0
+
+    # --------------------------------------------
+    # Wrong Data Type Inputs
+    # --------------------------------------------
+    def test_string_input_salary(self):
+        with pytest.raises(TypeError):
+            TaxCalculator("500000", 0, 0, "New")
+
+    def test_none_input(self):
+        with pytest.raises(TypeError):
+            TaxCalculator(None, 0, 0, "Old")
+
+
+    # --------------------------------------------
+    # Large Negative Taxable Income
+    # --------------------------------------------
+    def test_large_negative_taxable_income(self):
+        calc = TaxCalculator(0, 0, 0, "New")
+        taxable = calc.calculate_taxable_income()
+        assert taxable <= 0

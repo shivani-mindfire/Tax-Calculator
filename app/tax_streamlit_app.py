@@ -1,22 +1,81 @@
 import streamlit as st
 import requests
-from services.TaxCalculator import TaxCalculator
-# import os
-API_BASE_URL = "http://localhost:8000"
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+# from google import genai
+from llms.gemini_llm import explain_tax as explain_tax_gemini
+from llms.openai_llm import explain_tax as explain_tax_openai
+from llms.groq_llm import compare_regimes as compare_regimes_groq
+from llms.ollama_llm import explain_tax as explain_tax_ollama
 
-# API_BASE_URL = "http://localhost:8000"
+# Load variables from .env into environment
+load_dotenv()
 
-st.set_page_config(page_title="Tax Calculator", layout="centered")
+# Access variables using os.getenv()
+API_BASE_URL = os.getenv("API_BASE_URL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Initialize the OpenAI client
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+
+st.set_page_config(page_title="Tax Calculator", layout="wide")
 st.title("Tax Calculator")
 
 # ─────────────────────────────────────────────
 # Input Fields
 # ─────────────────────────────────────────────
 
+
+with st.sidebar:
+
+
+    st.subheader("About")
+    st.info(
+        "This tool helps you calculate income tax under both Old and New regimes "
+        "as per Indian Income Tax rules."
+    )
+    st.caption(" Data is saved via FastAPI backend on port 8000.")
+
+
+
+# ─────────────────────────────────────────────
+# API Function
+# ─────────────────────────────────────────────
+
+def calculate_tax_api(basic_salary, hra, other_income, regime):
+    """
+    Sends a POST request to the FastAPI /tax endpoint.
+
+    Args:
+        basic_salary (float): Basic salary of the individual.
+        hra (float): House Rent Allowance.
+        other_income (float): Any other additional income.
+        regime (str): Tax regime - "Old" or "New".
+
+    Returns:
+        dict: API response containing gross_income, taxable_income, total_tax, etc.
+
+    Raises:
+        requests.exceptions.ConnectionError: If FastAPI is not running.
+        requests.exceptions.HTTPError: If the server returns a 4xx/5xx response.
+    """
+    payload = {
+        "basic_salary": basic_salary,
+        "hra": hra,
+        "other_income": other_income,
+        "regime": regime,
+    }
+    response = requests.post(f"{API_BASE_URL}/tax", json=payload)
+    response.raise_for_status()
+    return response.json()
+
+
+    
+
 col1, col2, col3, col4, col5 = st.columns(5)
 
-# with col1:
-    # record_id = st.number_input("Record ID", min_value=1, step=1)
 
 with col1:
     basic_salary = st.number_input("Annual Income (₹)", min_value=0.0)
@@ -38,22 +97,9 @@ if st.button("Calculate Tax"):
     if basic_salary <= 0:
         st.warning(" Please enter a valid Annual Income.")
     else:
-        calculator = TaxCalculator(basic_salary, hra, other_income, regime)
-        gross_income = calculator.calculate_gross_income()
-        tax = calculator.calculate_tax()
-        payload = {
-            
-            "basic_salary": basic_salary,
-            "hra": hra,
-            "other_income": other_income,
-            "gross_income": gross_income,
-            "tax": tax,
-            "regime": regime,
-        }
+        
         try:
-            response = requests.post(f"{API_BASE_URL}/tax", json=payload)
-            response.raise_for_status()
-            result = response.json()
+            result = calculate_tax_api(basic_salary, hra, other_income, regime)
 
             st.success(f"Tax Payable: ₹ {result['total_tax']:,.2f} |Record saved successfully!")
 
@@ -65,6 +111,15 @@ if st.button("Calculate Tax"):
                     f"{result['total_tax']:,.2f}",
                 ]
             })
+              # ── GPT-4o Explanation ──────────────────
+            with st.spinner("AI is explaining your tax..."):
+                # explanation = explain_tax_openai(result)
+                # explanation = explain_tax_gemini(result)
+                explanation = explain_tax_ollama(result)
+
+
+            st.subheader("🧾 What does this mean?")
+            st.info(explanation)
 
         except requests.exceptions.ConnectionError:
             st.error("Cannot connect to FastAPI. Make sure it is running on port 8000.")
@@ -76,20 +131,36 @@ if st.button("Calculate Tax"):
 # ─────────────────────────────────────────────
 
 if st.button("Compare Regime"):
-    old = TaxCalculator(basic_salary, hra, other_income, "Old")
-    new = TaxCalculator(basic_salary, hra, other_income, "New")
-
     st.subheader("Regime Comparison")
-    st.table({
-        "Details": ["Gross Income", "Taxable Income", "Tax Payable"],
-        "Old Regime (₹)": [
-            f"{old.calculate_gross_income():,.2f}",
-            f"{old.calculate_taxable_income():,.2f}",
-            f"{old.calculate_tax():,.2f}",
-        ],
-        "New Regime (₹)": [
-            f"{new.calculate_gross_income():,.2f}",
-            f"{new.calculate_taxable_income():,.2f}",
-            f"{new.calculate_tax():,.2f}",
-        ],
-    })
+    if basic_salary <= 0:
+        st.warning("⚠️ Please enter a valid Annual Income.")
+    else:
+        try:
+
+            old = calculate_tax_api(basic_salary, hra, other_income, "Old")
+            new = calculate_tax_api(basic_salary, hra, other_income, "New")
+
+            st.table({
+                "Details": ["Gross Income", "Taxable Income", "Tax Payable"],
+                "Old Regime (₹)": [
+                    f"{old['gross_income']:,.2f}",
+                    f"{old['taxable_income']:,.2f}",
+                    f"{old['total_tax']:,.2f}",
+                ],
+                "New Regime (₹)": [
+                    f"{new['gross_income']:,.2f}",
+                    f"{new['taxable_income']:,.2f}",
+                    f"{new['total_tax']:,.2f}",
+                ],
+            })
+            with st.spinner("AI is comparing regimes..."):
+                recommendation = compare_regimes_groq(old, new)
+
+            st.subheader("Which Regime is Better for You?")
+            st.info(recommendation)
+
+
+        except requests.exceptions.ConnectionError:
+            st.error("Cannot connect to FastAPI.")
+        except Exception as e:
+            st.error(f"Error: {e}")

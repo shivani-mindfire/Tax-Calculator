@@ -17,6 +17,11 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ── Streamlit Service ─────────────────────────────────────────────────────
   streamlit:
@@ -35,6 +40,11 @@ services:
     depends_on:
       - fastapi                       # Start FastAPI first
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 # ── Shared Volume for SQLite DB ───────────────────────────────────────────────
 volumes:

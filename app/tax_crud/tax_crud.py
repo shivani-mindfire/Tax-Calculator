@@ -27,8 +27,10 @@ init_db()
 # ─────────────────────────────────────────────
 def create_tax(data: TaxRequest):
     logger.info(f"Creating tax")
+    logger.info(data)
 
-    calc = TaxCalculator(data.basic_salary, data.hra, data.other_income)
+
+    calc = TaxCalculator(data.basic_salary, data.hra, data.other_income,data.regime)
     gross_income    = calc.calculate_gross_income()
     taxable_income  = calc.calculate_taxable_income()
     total_tax       = calc.calculate_tax()

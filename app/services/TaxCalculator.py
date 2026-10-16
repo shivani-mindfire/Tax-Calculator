@@ -1,5 +1,5 @@
 # import logging
-from   config.log_config import logger
+from config.log_config import logger
 
 
 class TaxCalculator:
@@ -17,7 +17,7 @@ class TaxCalculator:
     logger.info(STANDARD_DEDUCTION)
 
     
-    def __init__(self, basic_salary, hra, other_income, regime="new"):
+    def __init__(self, basic_salary, hra, other_income, regime):
         """
         Initializes TaxCalculator with salary components.
 
@@ -30,7 +30,7 @@ class TaxCalculator:
         self.hra = hra
         self.other_income = other_income
         self.regime = regime.lower()
-        logger.info(f"TaxCalculator initialized | Basic: {basic_salary} | HRA: {hra} | Other: {other_income}")
+        # logger.info(f"TaxCalculator initialized | Basic: {basic_salary} | HRA: {hra} | Other: {other_income}")
 
 
     def calculate_gross_income(self):
@@ -38,7 +38,7 @@ class TaxCalculator:
         Calculates the total gross income by summing all income components.
         """
         gross = self.basic_salary + self.hra + self.other_income
-        logger.info(f"Gross income calculated: {gross}")
+        # logger.info(f"Gross income calculated: {gross}")
         return gross
 
     def calculate_taxable_income(self):
@@ -49,11 +49,11 @@ class TaxCalculator:
         if self.regime == "new":
             self.STANDARD_DEDUCTION = 75000
         else:
-            self.STANDARD_DEDUCTION = 20000
+            self.STANDARD_DEDUCTION = 50000
 
         gross_income = self.calculate_gross_income()
         taxable_income = gross_income - self.STANDARD_DEDUCTION
-        logger.info(f"Taxable income calculated: {taxable_income} (after deduction of {self.STANDARD_DEDUCTION})")
+        # logger.info(f"Taxable income calculated: {taxable_income} (after deduction of {self.STANDARD_DEDUCTION})")
         return taxable_income
 
     def calculate_new_regime_tax(self):
@@ -99,7 +99,7 @@ class TaxCalculator:
         cess = tax * 0.04
         tax = tax + cess
         
-        logger.info(f"Tax calculated: {tax} for taxable income: {income}")
+        # logger.info(f"Tax calculated: {tax} for taxable income: {income}")
 
         return tax
     
@@ -123,12 +123,13 @@ class TaxCalculator:
         # Add 4% Health & Education Cess
         cess = tax * 0.04
         tax = tax + cess
+        # logger.info(f"TaxCalculator initialized | Basic: {self.basic_salary} | HRA: {self.hra} | Other: {self.other_income}")
         
         return tax
 
     def calculate_tax(self):
 
-        income = self.calculate_taxable_income()
+        # income = self.calculate_taxable_income()
         
         if self.regime == "new":
             tax = self.calculate_new_regime_tax()
@@ -140,19 +141,9 @@ class TaxCalculator:
             raise ValueError("Invalid tax regime selected")
 
 
-        logger.info(
-            f"Tax calculated: {tax} | Regime: {self.regime} | Income: {income}"
-        )
+        # logger.info(
+            # f"Tax calculated: {tax} | Regime: {self.regime} | "
+        # )
 
         return tax
     
-
-# basic = float(input("Enter Basic Salary: "))
-# hra = float(input("Enter HRA: "))
-# other = float(input("Enter Other Income: "))
-
-# tax_obj = TaxCalculator(basic, hra, other)
-
-# print("Gross Income:", tax_obj.calculate_gross_income())
-# print("Taxable Income:", tax_obj.calculate_taxable_income())
-# print("Total Tax:", tax_obj.calculate_tax())

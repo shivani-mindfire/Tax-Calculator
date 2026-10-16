@@ -16,6 +16,7 @@ COPY app/ .
 RUN mkdir -p /app/data
 
 ENV PYTHONPATH=/app
+ENV PYTHONNUNBUFFERED=1
 
 # ── Expose Ports ──────────────────────────────────────────────────────────────
 # FastAPI runs on 8000, Streamlit runs on 8501
